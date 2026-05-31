@@ -40,18 +40,18 @@ impl SystemInfoCollector {
 
         // ===== Memory =====
         // On macOS: total - available = active (real app memory, excludes cache)
-        // cached = used - app_used
+        // macOS: available_memory() 只返回 free+inactive，值极小
+        // 直接用 used_memory() 作为"已用"（排除 inactive+purgeable）
+        // cached = total - used（剩余部分：空闲 + 文件缓存）
         let total_mem = self.sys.total_memory() as f64;
         let used_mem = self.sys.used_memory() as f64;
-        let avail_mem = self.sys.available_memory() as f64;
-        let app_used = if avail_mem < total_mem { total_mem - avail_mem } else { used_mem };
-        let cached = if used_mem > app_used { used_mem - app_used } else { 0.0 };
+        let cached = if total_mem > used_mem { total_mem - used_mem } else { 0.0 };
         let used_swap = self.sys.used_swap() as f64;
 
         let memory = MemInfo {
-            used: (app_used / BYTES_PER_GB * 10.0).round() / 10.0,
+            used: (used_mem / BYTES_PER_GB * 10.0).round() / 10.0,
             total: (total_mem / BYTES_PER_GB * 10.0).round() / 10.0,
-            usage_percent: if total_mem > 0.0 { ((app_used / total_mem) * 1000.0).round() / 10.0 } else { 0.0 },
+            usage_percent: if total_mem > 0.0 { ((used_mem / total_mem) * 1000.0).round() / 10.0 } else { 0.0 },
             swap_used: (used_swap / BYTES_PER_GB * 10.0).round() / 10.0,
             cached: (cached / BYTES_PER_GB * 10.0).round() / 10.0,
         };
@@ -201,15 +201,13 @@ fn collect_snapshot(sys: &System, prev_disk: &mut Option<(u64, u64, Instant)>, p
 
     let total_mem = sys.total_memory() as f64;
     let used_mem = sys.used_memory() as f64;
-    let avail_mem = sys.available_memory() as f64;
-    let app_used = if avail_mem < total_mem { total_mem - avail_mem } else { used_mem };
-    let cached = if used_mem > app_used { used_mem - app_used } else { 0.0 };
+    let cached = if total_mem > used_mem { total_mem - used_mem } else { 0.0 };
     let used_swap = sys.used_swap() as f64;
 
     let memory = MemInfo {
-        used: (app_used / BYTES_PER_GB * 10.0).round() / 10.0,
+        used: (used_mem / BYTES_PER_GB * 10.0).round() / 10.0,
         total: (total_mem / BYTES_PER_GB * 10.0).round() / 10.0,
-        usage_percent: if total_mem > 0.0 { ((app_used / total_mem) * 1000.0).round() / 10.0 } else { 0.0 },
+        usage_percent: if total_mem > 0.0 { ((used_mem / total_mem) * 1000.0).round() / 10.0 } else { 0.0 },
         swap_used: (used_swap / BYTES_PER_GB * 10.0).round() / 10.0,
         cached: (cached / BYTES_PER_GB * 10.0).round() / 10.0,
     };
