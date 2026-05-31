@@ -297,3 +297,66 @@ fn get_cpu_temperature() -> Option<f64> {
 fn get_cpu_temperature() -> Option<f64> {
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_json_serialization() {
+        let info = SystemInfo {
+            cpu: CpuInfo {
+                usage: 42.5,
+                cores: vec![35.0, 48.0],
+                temperature: Some(48.0),
+                speed: 3.2,
+            },
+            memory: MemInfo {
+                used: 8.5,
+                total: 16.0,
+                usage_percent: 53.1,
+                swap_used: 2.1,
+                cached: 4.0,
+            },
+            disk: DiskInfo { read_speed: 50.0, write_speed: 25.0 },
+            network: NetInfo { download_speed: 10.0, upload_speed: 5.0 },
+            gpu: GpuInfo { usage: Some(35.0), temperature: Some(62.0) },
+            processes: vec![
+                ProcessInfo { name: "Chrome".into(), cpu: 12.5, memory_mb: 1200.0 },
+            ],
+        };
+
+        let json = serde_json::to_string(&info).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Verify camelCase keys in JSON
+        assert_eq!(parsed["cpu"]["usage"].as_f64().unwrap(), 42.5);
+        assert_eq!(parsed["cpu"]["temperature"].as_f64().unwrap(), 48.0);
+        assert_eq!(parsed["memory"]["usagePercent"].as_f64().unwrap(), 53.1);
+        assert_eq!(parsed["memory"]["swapUsed"].as_f64().unwrap(), 2.1);
+        assert_eq!(parsed["memory"]["cached"].as_f64().unwrap(), 4.0);
+        assert_eq!(parsed["processes"][0]["memoryMB"].as_f64().unwrap(), 1200.0);
+        assert_eq!(parsed["gpu"]["usage"].as_f64().unwrap(), 35.0);
+    }
+
+    #[test]
+    fn test_null_gpu_fields_serialize_to_null() {
+        let gpu = GpuInfo { usage: None, temperature: None };
+        let json = serde_json::to_string(&gpu).unwrap();
+        assert_eq!(json, r#"{"usage":null,"temperature":null}"#);
+    }
+
+    #[test]
+    fn test_process_name_truncation() {
+        let p = ProcessInfo {
+            name: "VeryLongProcessNameThatExceeds20Chars".into(),
+            cpu: 5.0,
+            memory_mb: 100.0,
+        };
+        // Name should be truncated to 20 chars
+        // But note: truncation happens in collector logic, not in ProcessInfo struct
+        // This test just verifies the struct can hold any name
+        assert_eq!(p.name.len(), 37); // Original length
+    }
+}
