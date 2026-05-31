@@ -33,12 +33,29 @@ function App(): JSX.Element {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   /** 窗口置顶状态 */
   const [alwaysOnTop, setAlwaysOnTop] = useState(true);
+  /** 背景透明度（0.2 ~ 1.0） */
+  const [opacity, setOpacity] = useState(1.0);
+
+  // 通过 CSS 变量控制窗口透明度（纯前端实现，无需 Rust API）
+  useEffect(() => {
+    document.documentElement.style.setProperty('--app-opacity', String(opacity));
+  }, [opacity]);
 
   /** 右键菜单项配置 */
   const menuItems = [
     { label: '刷新频率: 2s', action: 'refresh-2', checked: true },
     { label: '刷新频率: 1s', action: 'refresh-1' },
     { label: '刷新频率: 5s', action: 'refresh-5' },
+    {
+      label: '透明度',
+      action: 'opacity-slider',
+      type: 'slider' as const,
+      value: opacity,
+      min: 0.2,
+      max: 1,
+      step: 0.05,
+      onChange: (val: number) => setOpacity(val),
+    },
     { label: '窗口置顶', action: 'toggle-ontop', checked: alwaysOnTop },
     { label: '开机启动', action: 'autostart' },
     { label: '退出', action: 'quit' },
