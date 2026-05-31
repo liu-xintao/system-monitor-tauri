@@ -1,9 +1,32 @@
-// 系统监控 Tauri 后端入口
-// 提供 mini 窗口（280×400）和系统信息采集能力
+mod types;
+mod collector;
+mod commands;
 
-/// 启动 Tauri 应用
+use commands::CollectorState;
+use std::sync::Mutex;
+use tauri::Manager;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let collector = collector::SystemInfoCollector::new(2000);
+
     tauri::Builder::default()
+        .manage(CollectorState {
+            collector: Mutex::new(collector),
+            callback_active: Mutex::new(false),
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::set_refresh_interval,
+            commands::set_always_on_top,
+            commands::quit_app,
+            commands::renderer_ready,
+        ])
+        .setup(|app| {
+            let window = app.get_webview_window("main").unwrap();
+            // Show the window after setup (was created with visible: false)
+            let _ = window.show();
+            Ok(())
+        })
         .run(tauri::generate_context!())
-        .expect("启动 Tauri 应用失败");
+        .expect("error while running tauri application");
 }
