@@ -1,0 +1,70 @@
+/* ===== 全局重置 ===== */
+/* 消除浏览器默认边距和内边距，统一盒模型 */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== 默认主题 & 字体 ===== */
+/* 暗色背景（#16161a），浅色文字（#e6e0d8），暖灰高对比 */
+body {
+  background: #16161a;
+  color: #e6e0d8;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow: hidden;           /* 禁止 body 滚动条，窗口内由 .metrics-body 处理 */
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== 应用容器 ===== */
+/* flex 列布局：标题栏 + 可滚动内容区 */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #16161a;
+  border-radius: 8px;         /* 圆角窗口（frameless 窗口圆角） */
+  overflow: hidden;
+}
+
+/* ===== 指标内容区 ===== */
+/* 可滚动的数据展示区域 */
+.metrics-body {
+  flex: 1;
+  padding: 12px 14px 10px;
+  overflow-y: auto;           /* 内容溢出时垂直滚动 */
+}
+
+/* 自定义滚动条样式 — 窄、透明轨道、暗色滑块 */
+.metrics-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.metrics-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.metrics-body::-webkit-scrollbar-thumb {
+  background: #2a2a30;
+  border-radius: 2px;
+}
+
+/* ===== 动画关键帧 ===== */
+/* 详情面板展开动画：淡入 + 高度展开 */
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 200px; }
+}
+
+/* ===== 工具类 ===== */
+/* 核心利用率条动画：宽度变化有平滑过渡 */
+.core-bar {
+  transition: width 0.3s ease;
+}
