@@ -29,7 +29,8 @@ export default function DragHandle({ title = 'SYS MONITOR' }: DragHandleProps): 
         cursor: 'grab',
         background: '#141418',
         userSelect: 'none',
-      }}
+        WebkitAppRegion: 'drag',
+      } as React.CSSProperties}
     >
       {/* 左侧装饰圆点 */}
       <div style={{ display: 'flex', gap: '3px' }}>

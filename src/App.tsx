@@ -14,7 +14,7 @@
  *
  * 数据未就绪时显示"正在采集数据..."加载提示。
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { JSX } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSystemInfo, getSpectrumData } from './hooks/useSystemInfo';
@@ -44,10 +44,14 @@ function App(): JSX.Element {
     { label: '退出', action: 'quit' },
   ];
 
-  /** 右键点击处理：记录菜单位置 */
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setMenu({ x: e.clientX, y: e.clientY });
+  // 使用原生事件监听右键点击（比 React 合成事件更可靠，尤其是 Tauri webview 中）
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      e.preventDefault();
+      setMenu({ x: e.clientX, y: e.clientY });
+    };
+    document.addEventListener('contextmenu', handler);
+    return () => document.removeEventListener('contextmenu', handler);
   }, []);
 
   /** 菜单选择处理 */
@@ -81,7 +85,7 @@ function App(): JSX.Element {
   // 数据未就绪时显示加载状态
   if (!info) {
     return (
-      <div className="app" onContextMenu={handleContextMenu}>
+      <div className="app" >
         <DragHandle />
         <div className="metrics-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
           <p style={{ color: '#5c5854', fontSize: '12px' }}>正在采集数据...</p>
@@ -91,7 +95,7 @@ function App(): JSX.Element {
   }
 
   return (
-    <div className="app" onContextMenu={handleContextMenu}>
+    <div className="app" >
       <DragHandle />
 
       <div className="metrics-body">
